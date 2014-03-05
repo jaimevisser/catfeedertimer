@@ -65,28 +65,31 @@ void setup()
   pinMode(BUTTON_DOWN, INPUT_PULLUP);
   pinMode(BUTTON_LEFT, INPUT_PULLUP);
   pinMode(BUTTON_RIGHT, INPUT_PULLUP);
+  
+  printmain();
 }
 
 void loop() {
   if(state < 4){
     if(digitalRead(BUTTON_UP) == LOW){
       timer[state] += timeincrement[selected];
-      delay(300);
+      printmain();
     }else if(timer[state] - timeincrement[selected] >= 0 && digitalRead(BUTTON_DOWN) == LOW){
       timer[state] -= timeincrement[selected];
-      delay(300);
+      printmain();
     }else if(selected > 0 && digitalRead(BUTTON_LEFT) == LOW){
       selected -= 1;
-      delay(300);
+      printmain();
     }else if(selected < 3 && digitalRead(BUTTON_RIGHT) == LOW){
       selected += 1;
-      delay(300);
+      printmain();
     }
   }
-  printmain();
+  delay(300);
 }
 
 void printmain(){
+ lcd.noCursor();
  lcd.setCursor(0,0);
  for(byte i=0;i<4;i++){
    if(timer[i] > 0){
@@ -114,6 +117,8 @@ void printmain(){
  printPad(numberOfMinutes(time));
  lcd.print(':');
  printPad(numberOfSeconds(time));
+ lcd.setCursor(6+(selected*3),1);
+ lcd.cursor();
 }
 
 void printPad(byte t){
