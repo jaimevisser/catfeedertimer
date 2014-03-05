@@ -11,6 +11,12 @@
 #define numberOfHours(_time_) (((_time_) % SECS_PER_DAY) / SECS_PER_HOUR)
 #define elapsedDays(_time_) ((_time_) / SECS_PER_DAY)
 
+const unsigned long timeincrement[3] = {
+        SECS_PER_DAY,
+        SECS_PER_HOUR,
+        SECS_PER_MIN
+    };
+
 const byte BUTTON_UP    = 2;
 const byte BUTTON_DOWN  = 4;
 const byte BUTTON_LEFT  = 3;
@@ -30,8 +36,16 @@ const byte LCD_D7     =  7;
 const byte LCD_COLS = 16;
 const byte LCD_ROWS =  2;
 
-unsigned long offset = 00 + (06*SECS_PER_MIN) + (17*SECS_PER_HOUR);
-unsigned long timer[4] = {200,0,0,0};
+unsigned long offset = 00 + (6*SECS_PER_HOUR);
+unsigned long timer[4] = {
+        (12*SECS_PER_HOUR),
+        (12*SECS_PER_HOUR)+(1*SECS_PER_DAY),
+        (12*SECS_PER_HOUR)+(2*SECS_PER_DAY),
+        (12*SECS_PER_HOUR)+(3*SECS_PER_DAY)
+    };
+    
+byte state = 0;
+byte selected = 0;
 
 LiquidCrystal lcd(
   LCD_RS,
@@ -54,6 +68,21 @@ void setup()
 }
 
 void loop() {
+  if(state < 4){
+    if(digitalRead(BUTTON_UP) == LOW){
+      timer[state] += timeincrement[selected];
+      delay(300);
+    }else if(timer[state] - timeincrement[selected] >= 0 && digitalRead(BUTTON_DOWN) == LOW){
+      timer[state] -= timeincrement[selected];
+      delay(300);
+    }else if(selected > 0 && digitalRead(BUTTON_LEFT) == LOW){
+      selected -= 1;
+      delay(300);
+    }else if(selected < 3 && digitalRead(BUTTON_RIGHT) == LOW){
+      selected += 1;
+      delay(300);
+    }
+  }
   printmain();
 }
 
@@ -67,9 +96,18 @@ void printmain(){
    }
  }
  
- unsigned long time = (millis() / 1000UL) + offset;
+ lcd.print(' ');
+ lcd.print(state);
+ lcd.print(selected);
  
- lcd.print(elapsedDays(time));
+ unsigned long time = (millis() / 1000UL) + offset;
+ if(state < 5){
+   time = timer[state];
+ }
+ 
+ lcd.setCursor(1,1);
+ lcd.print("dag ");
+ printPad(elapsedDays(time));
  lcd.print('/');
  printPad(numberOfHours(time));
  lcd.print(':'); 
