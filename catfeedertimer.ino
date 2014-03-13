@@ -45,6 +45,9 @@ unsigned long timer[4] = {
   (12*SECS_PER_HOUR)+(2*SECS_PER_DAY),
   (12*SECS_PER_HOUR)+(3*SECS_PER_DAY)};
 
+const byte STATE_SELECT = 5;
+const byte STATE_CLOCK  = 4;
+
 byte state = 0;
 byte selected = 0;
 
@@ -77,25 +80,73 @@ void setup()
 }
 
 void loop() {
-  if(state < 4){
-    if(digitalRead(BUTTON_UP) == LOW){
-      timer[state] += timeincrement[selected];
-      printBottomLine();
-    }
-    else if(timer[state] - timeincrement[selected] >= 0 && digitalRead(BUTTON_DOWN) == LOW){
-      timer[state] -= timeincrement[selected];
-      printBottomLine();
-    }
-    else if(selected > 0 && digitalRead(BUTTON_LEFT) == LOW){
-      selected -= 1;
-      printBottomLine();
-    }
-    else if(selected < 3 && digitalRead(BUTTON_RIGHT) == LOW){
+  if(digitalRead(BUTTON_UP) == LOW){
+    onUp();
+    afterButton();
+  }
+  else if(digitalRead(BUTTON_DOWN) == LOW){
+    onDown();
+    afterButton();
+  }
+  else if(digitalRead(BUTTON_LEFT) == LOW){
+    onLeft();
+    afterButton();
+  }
+  else if(digitalRead(BUTTON_RIGHT) == LOW){
+    onRight();
+    afterButton();
+  }
+
+}
+
+void afterButton(){
+  delay(300);
+}
+
+void onUp(){
+  if(state < 4 && selected < 2){
+    timer[state] += timeincrement[selected];
+    printBottomLine();
+  }
+  else if(state < 5 && selected == 3){
+    selected = state;
+    state = STATE_SELECT;
+    printBoth();
+  }
+}
+
+void onDown(){
+  if((state < 4) && (timer[state] >= timeincrement[selected])){
+    timer[state] -= timeincrement[selected];
+    printBottomLine();
+  }
+  else if(state == 5){
+    state = selected;
+    selected = 0;
+    printBoth();
+  }
+}
+
+void onLeft(){
+  if(selected > 0){
+    selected -= 1;
+    printBottomLine();
+  }
+}
+
+void onRight(){
+  if(state < 5){
+    if(selected < 3){
       selected += 1;
       printBottomLine();
     }
   }
-  delay(300);
+  else if(state == 5){
+    if(selected < 4){
+      selected += 1;
+      printBottomLine();
+    }
+  }
 }
 
 void printBoth(){
@@ -103,7 +154,6 @@ void printBoth(){
   printtl();
   printbl();
   setcursor();
-  lcd.cursor();
 }
 
 
@@ -111,35 +161,41 @@ void pintTopLine(){
   lcd.noCursor();
   printtl();
   setcursor();
-  lcd.cursor();
 }
 
 void printBottomLine(){
   lcd.noCursor();
-  printtl();
+  printbl();
   setcursor();
-  lcd.cursor();
 }
 
 void printtl(){
   lcd.setCursor(0,0);
   for(byte i=0;i<4;i++){
-    if(timer[i] > 0){
+    if(i == state){
+      lcd.print('*');
+    }
+    else if(timer[i] > 0){
       lcd.print('O');
     }
     else{
-      lcd.print('*');
+      lcd.print('.');
     }
   }
+  
+  lcd.print('C');
 
 }
 
 void printbl(){
   lcd.setCursor(1,1);
 
-  unsigned long time = (millis() / 1000UL) + offset;
+  unsigned long time; 
   if(state < 5){
     time = timer[state];
+  }
+  else{
+    time = (millis() / 1000UL) + offset;
   }
 
   lcd.print("dag ");
@@ -148,18 +204,42 @@ void printbl(){
   printPad(numberOfHours(time));
   lcd.print(':'); 
   printPad(numberOfMinutes(time));
-  lcd.print(':');
-  printPad(numberOfSeconds(time));
+  if(state > 4){
+    lcd.print(':');
+    printPad(numberOfSeconds(time));
+  }
+  else{
+    lcd.print(" ^");
+  }
 }
 
 void setcursor(){
-  lcd.setCursor(6+(selected*3),1);
+  if(state < 5){
+    lcd.setCursor(5+(selected*3),1);
+  }
+  else if(state == STATE_SELECT){
+    lcd.setCursor(selected,0);
+  }
+
+  if(state < 6){
+    lcd.cursor();
+  }
 }
 
 void printPad(byte t){
   if(t < 10) lcd.print("0");
   lcd.print(t);
 }
+
+
+
+
+
+
+
+
+
+
 
 
 
