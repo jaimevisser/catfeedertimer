@@ -83,7 +83,6 @@ void setup()
   lcd.createChar(0, CHAR_ARROW_DOWN_DATA);
 
   servo.attach(SERVO);
-
   servo.write(90);
 
   pinMode(BUTTON_UP, INPUT_PULLUP);
@@ -91,7 +90,7 @@ void setup()
   pinMode(BUTTON_LEFT, INPUT_PULLUP);
   pinMode(BUTTON_RIGHT, INPUT_PULLUP);
 
-  printBoth();
+  printLCD();
 }
 
 void loop() {
@@ -111,7 +110,36 @@ void loop() {
     onRight();
     afterButton();
   }
+  if(state == LAST_STATE){
+    lcd.setCursor(2,1);
+    printTime((millis() / 1000UL) + offset);
+    checktimers();
+  } 
+}
 
+void checktimers(){
+  for(byte i=0;i<4;i++){
+    if((timer[i] > 0) && (timer[i] < ((millis() / 1000UL) + offset))){
+      timer[i] = 0;
+      opentimer(i);
+      printLCD();
+    }
+  }
+}
+
+void opentimer(byte timer){
+  lcd.clear();
+  lcd.noCursor();
+  lcd.setCursor(0,0);
+  
+  lcd.print("Openen vak ");
+  lcd.print(timer+1);
+  
+  servo.write(180);
+  delay(1000);
+  servo.write(0);
+  delay(1000);
+  servo.write(90);
 }
 
 void afterButton(){
@@ -123,21 +151,21 @@ void onUp(){
     if(state < 4){
       if((timer[state] + timeincrement[selected]) < TIMER_MAX){
         timer[state] += timeincrement[selected];
-        printBottomLine();
+        printLCD();
       }
     }
     else if(state == 4){
       offset += timeincrement[selected];
-      printBottomLine();
+      printLCD();
     }
   }
   else if(state > 0){
     state--;
-    printBoth();
+    printLCD();
   }
   else if(state == 0){
     state=LAST_STATE;
-    printBoth();
+    printLCD();
   }
 }
 
@@ -146,131 +174,132 @@ void onDown(){
     if(state < 4){
       if(timer[state] >= timeincrement[selected]){
         timer[state] -= timeincrement[selected];
-        printBottomLine();
+        printLCD();
       }
     }
     else if(state == 4){
       if(offset >= timeincrement[selected]){
         offset -= timeincrement[selected];
-        printBottomLine();
+        printLCD();
       }
     }
   }
   else if(state < LAST_STATE){
     state++;
-    printBoth();
+    printLCD();
   }
   else if(state == LAST_STATE){
     state = 0;
-    printBoth();
+    printLCD();
   }
 }
 
 void onLeft(){
-  if(selected > 0){
+  byte minSelected = state == LAST_STATE ? 3 : 0;
+  if(selected > minSelected){
     selected -= 1;
-    printBottomLine();
+    printLCD();
+  }else if(selected == minSelected){
+    selected = 3;
+    printLCD();
   }
 }
 
 void onRight(){
+  byte minSelected = state == LAST_STATE ? 3 : 0;
   if(selected < 3){
     selected += 1;
-    printBottomLine();
+    printLCD();
+  }
+  else if(selected == 3){
+    selected = minSelected;
+    printLCD();
   }
 }
 
-void printBoth(){
-  lcd.noCursor();
+void printLCD(){
   lcd.clear();
-  printtl();
-  printbl();
-  setcursor();
-}
-
-
-void pintTopLine(){
   lcd.noCursor();
-  printtl();
-  setcursor();
-}
-
-void printBottomLine(){
-  lcd.noCursor();
-  printbl();
-  setcursor();
-}
-
-void printtl(){
   lcd.setCursor(0,0);
+  unsigned long time;
+
   if(state < 5){
     if(state < 4){
       lcd.print("Inst. Vak ");
       lcd.print(state+1);
-      lcd.setCursor(15,0);
-      lcd.print("^");
     }
     else if(state == 4){
       lcd.print("Inst. Klok");
-      lcd.setCursor(15,0);
-      lcd.print("^");
     }
   }
   else{
     for(byte i=0;i<4;i++){
-      if(i == state){
-        lcd.print('*');
-      }
-      else if(timer[i] > 0){
-        lcd.print('O');
+      if(timer[i] > 0){
+        lcd.print(i+1);
       }
       else{
         lcd.print('.');
       }
     }
+
+    time = nextTimer();
+    if(time > 0){
+      lcd.print(" > ");
+      printTimeMins(time);
+    }
   }
 
-
-}
-
-void printbl(){
-  lcd.setCursor(0,1);
-
-  unsigned long time; 
+  lcd.setCursor(2,1);
+  time = (millis() / 1000UL) + offset;
   if(state < 4){
     time = timer[state];
   }
+
+  if(state == LAST_STATE){
+    printTime(time);
+  }
   else{
-    time = (millis() / 1000UL) + offset;
+    printTimeMins(time);
   }
 
+  if(selected == 3){
+    lcd.setCursor(15,0);
+    lcd.print("^");
+    lcd.setCursor(15,1);
+    lcd.write(CHAR_ARROW_DOWN);
+  }
+
+  setcursor();
+}
+
+void printTime(unsigned long time){
+  printTimeMins(time);
+  lcd.print(':');
+  printPad(numberOfSeconds(time));
+}
+
+void printTimeMins(unsigned long time){
   lcd.print("d");
   lcd.print(elapsedDays(time));
   lcd.print('/');
   printPad(numberOfHours(time));
   lcd.print(':'); 
   printPad(numberOfMinutes(time));
-  if(state > 4){
-    lcd.print(':');
-    printPad(numberOfSeconds(time));
-  }
+}
 
-  lcd.setCursor(15,1);
-  lcd.write(CHAR_ARROW_DOWN);
+unsigned long nextTimer(){
+  for(byte i=0;i<4;i++){
+    if(timer[i] > 0) return timer[i];
+  }
+  return 0;
 }
 
 void setcursor(){
-  if(state < 5){
+  if(state < LAST_STATE){
     if(selected < 3){
-      lcd.setCursor(1+(selected*3),1);
+      lcd.setCursor(3+(selected*3),1);
+      lcd.cursor();
     }
-    else{
-      lcd.setCursor(15,1);
-    }
-  }
-
-  if(state < 6){
-    lcd.cursor();
   }
 }
 
@@ -278,21 +307,6 @@ void printPad(byte t){
   if(t < 10) lcd.print("0");
   lcd.print(t);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
