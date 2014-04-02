@@ -36,8 +36,7 @@ const byte BUTTON_LEFT  = 11;
 const byte BUTTON_UP    = A0;
 
 /* Servo positions */
-// BOARD 1
-/*
+// BOARD 1 */
 const byte STEP[4] = {
 32,
 42,
@@ -45,9 +44,10 @@ const byte STEP[4] = {
 65
 };
 
-const byte NEUTRAL = 2;*/
+const byte NEUTRAL = 2;
 
-// BOARD 2
+// BOARD 2 */
+/*
 const byte STEP[4] = {
 36,
 49,
@@ -62,24 +62,28 @@ const byte LCD_COLS = 16;
 const byte LCD_ROWS =  2;
 
 /* Offset at start time */
-unsigned long offset = 00 + (6*SECS_PER_HOUR);
+unsigned long offset = 00 + (7*SECS_PER_HOUR);
+
+/* Last interaction */
+unsigned long lastInteraction = 0;
+const unsigned long TIMEOUT = (1000UL) * (SECS_PER_MIN * 5);
 
 /* Timer vars with initial values*/
 unsigned long timer[4] = {
   (12*SECS_PER_HOUR),
+  (15*SECS_PER_HOUR),
   (12*SECS_PER_HOUR)+(1*SECS_PER_DAY),
-  (12*SECS_PER_HOUR)+(2*SECS_PER_DAY),
-  (12*SECS_PER_HOUR)+(3*SECS_PER_DAY)};
+  (15*SECS_PER_HOUR)+(1*SECS_PER_DAY)};
 
 const unsigned long TIMER_MAX = (9 * SECS_PER_DAY)+(23 * SECS_PER_HOUR)+(60 * SECS_PER_MIN);
 
 const byte LAST_STATE   = 5;
 
 /* State of the software */
-byte state = 0;
+byte state = 4;
 
 /* Selected edit field */
-byte selected = 0;
+byte selected = 3;
 
 const byte CHAR_ARROW_DOWN = 0;
 byte CHAR_ARROW_DOWN_DATA[8] = {
@@ -120,6 +124,8 @@ void setup()
   pinMode(BUTTON_RIGHT, INPUT_PULLUP);
 
   printLCD();
+  
+  lastInteraction = millis();
 }
 
 void loop() {
@@ -143,7 +149,13 @@ void loop() {
     lcd.setCursor(2,1);
     printTime((millis() / 1000UL) + offset);
     checktimers();
-  } 
+  }
+  if((lastInteraction > 0) && ((lastInteraction + TIMEOUT) < millis())){
+    lastInteraction = 0;
+    state = 5;
+    selected = 3;
+    printLCD();
+  }
 }
 
 void checktimers(){
@@ -176,7 +188,8 @@ void opentimer(byte timer){
 }
 
 void afterButton(){
-  delay(300);
+  lastInteraction = millis();
+  delay(250);
 }
 
 void onUp(){
