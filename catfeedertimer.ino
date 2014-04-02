@@ -18,27 +18,53 @@ const unsigned long timeincrement[3] = {
   SECS_PER_MIN
 };
 
-const byte LCD_RS       = 12;
-const byte LCD_ENABLE   = 11;
-const byte LCD_D4       = 10;
-const byte LCD_D5       =  9;
-const byte LCD_D6       =  8;
-const byte LCD_D7       =  7;
+/* LCD pin assignments */
+const byte LCD_RS       =  2;
+const byte LCD_ENABLE   =  3;
+const byte LCD_D4       =  7;
+const byte LCD_D5       =  8;
+const byte LCD_D6       =  9;
+const byte LCD_D7       = 10;
 
+/* Servo pin assignments */
 const byte SERVO        =  6;
 
-const byte BUTTON_RIGHT =  5;
-const byte BUTTON_DOWN  =  4;
-const byte BUTTON_LEFT  =  3;
-const byte BUTTON_UP    =  2;
+/* Button pin assignments */
+const byte BUTTON_RIGHT = A1;
+const byte BUTTON_DOWN  = 12;
+const byte BUTTON_LEFT  = 11;
+const byte BUTTON_UP    = A0;
 
-const byte BUTTONS[] = {
-  BUTTON_UP,BUTTON_DOWN,BUTTON_LEFT,BUTTON_RIGHT};
+/* Servo positions */
+// BOARD 1
+/*
+const byte STEP[4] = {
+32,
+42,
+52,
+65
+};
 
+const byte NEUTRAL = 2;*/
+
+// BOARD 2
+const byte STEP[4] = {
+36,
+49,
+63,
+78
+};
+
+const byte NEUTRAL = 2;
+
+/* LCD constants */
 const byte LCD_COLS = 16;
 const byte LCD_ROWS =  2;
 
+/* Offset at start time */
 unsigned long offset = 00 + (6*SECS_PER_HOUR);
+
+/* Timer vars with initial values*/
 unsigned long timer[4] = {
   (12*SECS_PER_HOUR),
   (12*SECS_PER_HOUR)+(1*SECS_PER_DAY),
@@ -46,11 +72,13 @@ unsigned long timer[4] = {
   (12*SECS_PER_HOUR)+(3*SECS_PER_DAY)};
 
 const unsigned long TIMER_MAX = (9 * SECS_PER_DAY)+(23 * SECS_PER_HOUR)+(60 * SECS_PER_MIN);
-const byte STATE_SELECT = 5;
-const byte STATE_CLOCK  = 4;
+
 const byte LAST_STATE   = 5;
 
+/* State of the software */
 byte state = 0;
+
+/* Selected edit field */
 byte selected = 0;
 
 const byte CHAR_ARROW_DOWN = 0;
@@ -83,7 +111,8 @@ void setup()
   lcd.createChar(0, CHAR_ARROW_DOWN_DATA);
 
   servo.attach(SERVO);
-  servo.write(90);
+  servo.write(NEUTRAL);
+  servo.detach();
 
   pinMode(BUTTON_UP, INPUT_PULLUP);
   pinMode(BUTTON_DOWN, INPUT_PULLUP);
@@ -128,6 +157,9 @@ void checktimers(){
 }
 
 void opentimer(byte timer){
+  servo.attach(SERVO);
+  servo.write(NEUTRAL);
+  
   lcd.clear();
   lcd.noCursor();
   lcd.setCursor(0,0);
@@ -135,11 +167,12 @@ void opentimer(byte timer){
   lcd.print("Openen vak ");
   lcd.print(timer+1);
   
-  servo.write(180);
+  servo.write(STEP[timer]);
   delay(1000);
-  servo.write(0);
+  servo.write(NEUTRAL);
   delay(1000);
-  servo.write(90);
+  
+  servo.detach();
 }
 
 void afterButton(){
