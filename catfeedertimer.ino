@@ -37,6 +37,7 @@ const byte BUTTON_UP    = A0;
 
 /* Servo positions */
 // BOARD 1 */
+/*
 const byte STEP[4] = {
 32,
 42,
@@ -47,7 +48,6 @@ const byte STEP[4] = {
 const byte NEUTRAL = 2;
 
 // BOARD 2 */
-/*
 const byte STEP[4] = {
 36,
 49,
@@ -161,7 +161,7 @@ void loop() {
 void checktimers(){
   for(byte i=0;i<4;i++){
     if((timer[i] > 0) && (timer[i] < ((millis() / 1000UL) + offset))){
-      timer[i] = 0;
+      timer[i] += SECS_PER_DAY;
       opentimer(i);
       printLCD();
     }
@@ -334,10 +334,18 @@ void printTimeMins(unsigned long time){
 }
 
 unsigned long nextTimer(){
+  unsigned long next = 0;
   for(byte i=0;i<4;i++){
-    if(timer[i] > 0) return timer[i];
+    if(timer[i] > 0){
+      next = timer[i];
+    }
   }
-  return 0;
+  for(byte i=0;i<4;i++){
+    if(timer[i] < next){
+      next = timer[i];
+    }
+  }
+  return next;
 }
 
 void setcursor(){
