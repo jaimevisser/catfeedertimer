@@ -1,5 +1,6 @@
 #include <LiquidCrystal.h>
 #include <Servo.h>
+#include <EEPROM.h>
 
 /* Useful Constants */
 #define SECS_PER_MIN  (60UL)
@@ -37,7 +38,7 @@ const byte BUTTON_UP    = A0;
 
 /* Servo positions */
 // BOARD 1 */
-/*
+
 const byte STEP[4] = {
 32,
 42,
@@ -48,6 +49,7 @@ const byte STEP[4] = {
 const byte NEUTRAL = 2;
 
 // BOARD 2 */
+/*
 const byte STEP[4] = {
 36,
 49,
@@ -62,7 +64,7 @@ const byte LCD_COLS = 16;
 const byte LCD_ROWS =  2;
 
 /* Offset at start time */
-unsigned long offset = 00 + (7*SECS_PER_HOUR);
+unsigned long offset = 00 + (18*SECS_PER_HOUR);
 
 /* Last interaction */
 unsigned long lastInteraction = 0;
@@ -118,6 +120,13 @@ void setup()
   servo.write(NEUTRAL);
   servo.detach();
 
+  //save();
+  EEPROM.get(0, timer);
+
+  for(byte i=0;i<4;i++){
+    timer[i] = timer[i] % SECS_PER_DAY;
+  }
+
   pinMode(BUTTON_UP, INPUT_PULLUP);
   pinMode(BUTTON_DOWN, INPUT_PULLUP);
   pinMode(BUTTON_LEFT, INPUT_PULLUP);
@@ -155,6 +164,7 @@ void loop() {
     state = 5;
     selected = 3;
     printLCD();
+    save();
   }
 }
 
@@ -180,9 +190,9 @@ void opentimer(byte timer){
   lcd.print(timer+1);
   
   servo.write(STEP[timer]);
-  delay(1000);
+  delay(2000);
   servo.write(NEUTRAL);
-  delay(1000);
+  delay(2000);
   
   servo.detach();
 }
@@ -213,6 +223,10 @@ void onUp(){
     state=LAST_STATE;
     printLCD();
   }
+
+  if(state == LAST_STATE){
+    save();
+  }
 }
 
 void onDown(){
@@ -237,6 +251,10 @@ void onDown(){
   else if(state == LAST_STATE){
     state = 0;
     printLCD();
+  }
+
+  if(state == LAST_STATE){
+    save();
   }
 }
 
@@ -337,11 +355,11 @@ unsigned long nextTimer(){
   unsigned long next = 0;
   for(byte i=0;i<4;i++){
     if(timer[i] > 0){
-      next = timer[i];
+      next = max(timer[i], next);
     }
   }
   for(byte i=0;i<4;i++){
-    if(timer[i] < next){
+    if(timer[i] < next && timer[i] > 0){
       next = timer[i];
     }
   }
@@ -360,6 +378,10 @@ void setcursor(){
 void printPad(byte t){
   if(t < 10) lcd.print("0");
   lcd.print(t);
+}
+
+void save(){
+  EEPROM.put(0,timer);
 }
 
 
