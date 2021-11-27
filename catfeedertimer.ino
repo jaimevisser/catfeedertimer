@@ -38,7 +38,7 @@ const byte BUTTON_UP    = A0;
 
 /* Servo positions */
 // BOARD 1 */
-
+/*
 const byte STEP[4] = {
 32,
 42,
@@ -46,18 +46,18 @@ const byte STEP[4] = {
 65
 };
 
-const byte NEUTRAL = 2;
+const byte NEUTRAL = 140;
+*/
 
-// BOARD 2 */
-/*
+// BOARD 2
 const byte STEP[4] = {
-36,
-49,
-63,
-78
+106,
+97,
+86,
+73
 };
 
-const byte NEUTRAL = 2;
+const byte NEUTRAL = 140;
 
 /* LCD constants */
 const byte LCD_COLS = 16;
@@ -383,9 +383,3 @@ void printPad(byte t){
 void save(){
   EEPROM.put(0,timer);
 }
-
-
-
-
-
-

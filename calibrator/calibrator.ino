@@ -46,13 +46,13 @@ const byte NEUTRAL = 2;*/
 
 // BOARD 2
 const byte STEP[4] = {
-36,
-49,
-63,
-78
+106,
+97,
+86,
+73
 };
 
-const byte NEUTRAL = 2;
+const byte NEUTRAL = 140;
 
 int pos = NEUTRAL;    // variable to store the servo position
 boolean changed = false;
