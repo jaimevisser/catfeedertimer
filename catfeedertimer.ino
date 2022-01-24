@@ -51,10 +51,10 @@ const byte NEUTRAL = 140;
 
 // BOARD 2
 const byte STEP[4] = {
-106,
-97,
-86,
-73
+102,
+93,
+82,
+71
 };
 
 const byte NEUTRAL = 140;
